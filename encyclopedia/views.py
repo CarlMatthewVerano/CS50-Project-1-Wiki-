@@ -21,3 +21,14 @@ def get_page(request, title):
         "title": title,
         "content": content
     })
+
+def search(request):
+    q = request.GET.get('q').strip()
+    entries = util.list_entries()
+
+    if q in entries:
+    
+    return render(request, "encyclopedia/titleEntry.html", {
+        "title": title,
+        "content": content
+    })
