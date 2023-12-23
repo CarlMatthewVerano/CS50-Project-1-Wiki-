@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, reverse
 
 from . import util
 
@@ -17,7 +17,7 @@ def get_page(request, title):
         return render(request, "encyclopedia/errorPage.html")
 
     content = markdown(content)
-    return render(request, "encyclopedia/titleEntry.html", {
+    return render(request, "encyclopedia/getEntry.html", {
         "title": title,
         "content": content
     })
@@ -26,9 +26,68 @@ def search(request):
     q = request.GET.get('q').strip()
     entries = util.list_entries()
 
-    if q in entries:
+    matched_entries = []
+
+    for title in entries:
+        if q.lower() in title.lower():
+            matched_entries.append(title)
+
+    if matched_entries:
+        exact = any(q.lower() == title.lower() for title in entries)
+        if exact:
+            return redirect(reverse('TITLE', args=[q.lower()]))
+
+        return render(request, "encyclopedia/searchResults.html", {
+            "entries": matched_entries,
+        })
     
-    return render(request, "encyclopedia/titleEntry.html", {
-        "title": title,
-        "content": content
+    return render(request, "encyclopedia/searchResults.html", {
+        "entries": [],
+    })
+
+def create(request):
+    if request.method == "POST":
+        title = request.POST.get("title").strip()
+        content = request.POST.get("content").strip()
+
+        if title == "":
+            return render(request, "encyclopedia/createEntry.html", {
+                "message": "No title!",
+                "title": title,
+                "content": content
+            })
+        
+        if title in util.list_entries():
+            return render(request, "encyclopedia/createEntry.html", {
+                "message": "Title already exists.",
+                "title": title,
+                "content": content
+            })
+        
+        util.save_entry(title, content)
+        return redirect(reverse("TITLE", args=[title.lower()]))
+    
+    return render(request, "encyclopedia/createEntry.html")
+
+def edit(request, title):
+    content = util.get_entry(title.strip())
+    if content == None:
+        return render(request, "encyclopedia/editEntry.html", {
+            'error': "404 Not Found"
+        })
+
+    if request.method == "POST":
+        content = request.POST.get("content").strip()
+        if content == "":
+            return render(request, "encyclopedia/editEntry.html", {
+                "message": "Can't save with empty field.",
+                "title": title,
+                "content": content
+            })
+        util.save_entry(title, content)
+        return redirect(reverse("TITLE", args=[title.lower()]))
+    
+    return render(request, "encyclopedia/editEntry.html", {
+        'content': content,
+        'title': title
     })
