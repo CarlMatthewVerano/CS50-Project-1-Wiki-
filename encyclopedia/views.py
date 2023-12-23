@@ -3,6 +3,7 @@ from django.shortcuts import render, redirect, reverse
 from . import util
 
 from markdown2 import markdown
+from random import randint
 
 def index(request):
     return render(request, "encyclopedia/index.html", {
@@ -73,14 +74,14 @@ def edit(request, title):
     content = util.get_entry(title.strip())
     if content == None:
         return render(request, "encyclopedia/editEntry.html", {
-            'error': "404 Not Found"
+            'error': "No Page Found"
         })
 
     if request.method == "POST":
         content = request.POST.get("content").strip()
         if content == "":
             return render(request, "encyclopedia/editEntry.html", {
-                "message": "Can't save with empty field.",
+                "message": "Content is empty, cannot save.",
                 "title": title,
                 "content": content
             })
@@ -91,3 +92,8 @@ def edit(request, title):
         'content': content,
         'title': title
     })
+
+def random(request):
+    entries = util.list_entries()
+    random_entry = entries[randint(0, len(entries)-1)]
+    return redirect(reverse("TITLE", args=[random_entry.lower()]))
