@@ -95,5 +95,6 @@ def edit(request, title):
 
 def random(request):
     entries = util.list_entries()
-    random_entry = entries[randint(0, len(entries)-1)]
+    max = len(entries) - 1
+    random_entry = entries[randint(0, max)]
     return redirect(reverse("TITLE", args=[random_entry.lower()]))
